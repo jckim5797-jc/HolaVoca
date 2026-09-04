@@ -149,15 +149,15 @@
         </div>
 
         <!-- 메인 헤드라인 -->
-        <h1 class="text-3xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight leading-[1.2] sm:leading-[1.15] mb-6">
+        <h1 class="text-3xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight leading-[1.25] sm:leading-[1.18] mb-6 break-keep">
           하루 <span class="bg-gradient-to-r from-brand-600 via-amber-500 to-red-500 bg-clip-text text-transparent">3분 퀴즈</span>로 끝내는<br class="hidden sm:inline" />
           스페인어 필수 단어 트레이닝
         </h1>
 
-        <!-- 서브 설명 -->
-        <p class="text-base sm:text-lg text-stone-600 dark:text-stone-300 max-w-2xl mx-auto mb-8 font-normal leading-relaxed">
-          지루한 깜지는 그만! 스페인어 원어민 발음(TTS)과 함께 양방향 3지선다 퀴즈로 뇌에 각인하세요.
-          동사, 명사, 전치사 품사별 집중 학습까지 한 번에 무료로 시작해보세요.
+        <!-- 서브 설명 (문장 끝맺음 및 단어 분리 방지) -->
+        <p class="text-base sm:text-lg text-stone-600 dark:text-stone-300 max-w-2xl mx-auto mb-8 font-normal leading-relaxed break-keep">
+          지루한 깜지는 그만! 원어민 발음과 양방향 퀴즈로 뇌에 쏙 각인하세요.<br class="hidden sm:inline" />
+          동사·명사·전치사 등 품사별 집중 학습을 지금 무료로 시작해보세요.
         </p>
 
         <!-- CTA 버튼 그룹 -->
@@ -191,19 +191,60 @@
       </div>
     </section>
 
-    <!-- ================= 상단 반응형 광고 배너 슬롯 ================= -->
+    <!-- ================= 상단 스폰서 광고 배너 (일반 유저에겐 세련된 광고, 호버 시 광고주 문의 안내) ================= -->
     <div class="max-w-4xl mx-auto px-4 sm:px-6 mb-8">
-      <div class="relative overflow-hidden rounded-xl border-2 border-dashed border-amber-300/70 dark:border-amber-700/60 bg-gradient-to-r from-amber-50/70 via-orange-50/50 to-amber-50/70 dark:from-stone-800/60 dark:to-stone-800/80 p-4 sm:p-5 text-center transition-all hover:border-brand-400">
-        <span class="absolute top-1.5 right-2 text-[10px] font-bold text-stone-400 uppercase tracking-widest bg-white dark:bg-stone-700 px-1.5 py-0.5 rounded border border-stone-200 dark:border-stone-600">Sponsored Ad</span>
-        <div class="flex flex-col sm:flex-row items-center justify-center gap-3">
-          <div class="w-10 h-10 rounded-full bg-brand-500/10 text-brand-500 flex items-center justify-center shrink-0">
-            <i class="fa-solid fa-rectangle-ad text-lg"></i>
+      <div class="group relative overflow-hidden rounded-2xl border border-amber-200/80 dark:border-amber-900/50 bg-gradient-to-r from-orange-50 via-amber-50 to-orange-100 dark:from-stone-800 dark:via-stone-800/90 dark:to-stone-800 p-4 sm:p-5 shadow-sm transition-all hover:shadow-md hover:border-brand-400">
+        
+        <!-- AD 배지 & 광고주 문의 버튼 -->
+        <div class="absolute top-2.5 right-3 flex items-center gap-2 z-10">
+          <button onclick="openAdInquiryModal('top_banner')" class="opacity-80 group-hover:opacity-100 text-[11px] font-bold text-brand-700 dark:text-brand-300 bg-white/90 dark:bg-stone-900/90 px-2.5 py-1 rounded-full border border-brand-200 dark:border-brand-800 hover:bg-brand-500 hover:text-white transition-all flex items-center gap-1 shadow-xs" title="이 자리에 광고 게재하기">
+            <i class="fa-solid fa-bullhorn text-[10px]"></i>
+            <span class="hidden sm:inline">광고 문의</span>
+          </button>
+          <span class="text-[10px] font-bold text-stone-400 uppercase tracking-widest bg-stone-200/70 dark:bg-stone-700/80 px-1.5 py-0.5 rounded text-[9px]">AD</span>
+        </div>
+
+        <!-- 배너 메인 콘텐츠 -->
+        <div class="flex flex-col sm:flex-row items-center justify-between gap-4">
+          <div class="flex items-center gap-3.5 text-left w-full sm:w-auto">
+            <div class="w-12 h-12 rounded-xl bg-gradient-to-br from-brand-500 to-amber-500 text-white flex items-center justify-center shrink-0 shadow-md shadow-brand-500/20">
+              <i class="fa-solid fa-plane-departure text-xl"></i>
+            </div>
+            <div>
+              <div class="flex items-center gap-2">
+                <span class="text-[11px] font-bold text-brand-600 dark:text-brand-400 uppercase">스폰서 추천</span>
+                <span class="text-stone-300 dark:text-stone-700">•</span>
+                <span class="text-xs text-stone-500 dark:text-stone-400">HolaVoca 파트너스</span>
+              </div>
+              <h3 class="text-sm sm:text-base font-bold text-stone-900 dark:text-white mt-0.5 break-keep">
+                스페인 현지 원어민 1:1 회화 튜터링 특별 체험전
+              </h3>
+              <p class="text-xs text-stone-600 dark:text-stone-400 mt-0.5 hidden sm:block">
+                단어 퀴즈와 함께 입으로 직접 말하는 가장 빠른 스페인어 마스터 플랜
+              </p>
+            </div>
           </div>
-          <div class="text-left text-sm">
-            <p class="font-bold text-stone-800 dark:text-stone-200">광고 슬롯 (728x90 / 반응형 배너)</p>
-            <p class="text-xs text-stone-500 dark:text-stone-400">Cloudflare 배포 후 구글 애드센스(Google AdSense) 코드를 이곳에 삽입하여 수익을 창출하세요.</p>
+
+          <!-- 액션 버튼 -->
+          <div class="flex items-center gap-2 w-full sm:w-auto shrink-0 justify-end">
+            <button onclick="openAdInquiryModal('top_banner')" class="w-full sm:w-auto px-4 py-2.5 rounded-xl bg-stone-900 hover:bg-black dark:bg-white dark:hover:bg-stone-200 text-white dark:text-stone-900 text-xs font-bold transition-all shadow-sm flex items-center justify-center gap-1.5">
+              <span>자세히 보기</span>
+              <i class="fa-solid fa-arrow-up-right-from-square text-[10px]"></i>
+            </button>
           </div>
         </div>
+
+        <!-- 호버 시 하단에 은은하게 나타나는 광고주 안내 바 -->
+        <div class="mt-3 pt-2.5 border-t border-amber-200/50 dark:border-stone-700/60 flex items-center justify-between text-[11px] text-stone-500 dark:text-stone-400">
+          <span class="flex items-center gap-1.5">
+            <i class="fa-solid fa-chart-line text-brand-500 text-[10px]"></i>
+            <span>스페인어 학습자 대상 고효율 타겟 배너 영역</span>
+          </span>
+          <a href="javascript:void(0)" onclick="openAdInquiryModal('top_banner')" class="text-brand-600 dark:text-brand-400 font-semibold hover:underline flex items-center gap-1">
+            <span>여기에 광고하기 &gt;</span>
+          </a>
+        </div>
+
       </div>
     </div>
 
@@ -309,9 +350,10 @@
               </button>
             </div>
 
-            <!-- 예문 힌트 (있을 경우) -->
-            <div id="example-box" class="mt-3 text-xs sm:text-sm text-stone-500 dark:text-stone-400 italic">
-              "Hablo español todos los días." (나는 매일 스페인어를 말해요.)
+            <!-- 예문 힌트 (가독성 높은 넉넉한 폰트와 스타일) -->
+            <div id="example-box" class="mt-4 inline-block px-5 py-2.5 rounded-xl bg-stone-100/90 dark:bg-stone-800/80 border border-stone-200/80 dark:border-stone-700/60 text-base sm:text-lg font-medium text-stone-700 dark:text-stone-200 shadow-xs">
+              <span class="font-bold text-brand-600 dark:text-brand-400">"Hablo español todos los días."</span>
+              <span class="text-xs sm:text-sm text-stone-500 dark:text-stone-400 block sm:inline sm:ml-2">(나는 매일 스페인어를 말해요.)</span>
             </div>
           </div>
 
@@ -346,19 +388,39 @@
 
     </section>
 
-    <!-- ================= 중간 인피드 광고 배너 슬롯 ================= -->
+    <!-- ================= 중간 인피드 광고 배너 슬롯 (스폰서 추천 & 광고주 문의) ================= -->
     <div class="max-w-3xl mx-auto px-4 sm:px-6 my-4">
-      <div class="rounded-xl border border-stone-200 dark:border-stone-800 bg-white dark:bg-stone-800/60 p-4 flex flex-col sm:flex-row items-center justify-between gap-4 shadow-sm">
-        <div class="flex items-center gap-3">
-          <span class="w-8 h-8 rounded-lg bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center font-bold text-sm">Ad</span>
-          <div class="text-left">
-            <p class="text-xs sm:text-sm font-bold text-stone-800 dark:text-stone-200">인피드 네이티브 광고 영역</p>
-            <p class="text-[11px] text-stone-400">퀴즈 풀이 사이 자연스럽게 광고를 노출하여 높은 클릭률(CTR)과 MAU 수익을 얻을 수 있습니다.</p>
+      <div class="group rounded-2xl border border-stone-200 dark:border-stone-800 bg-white dark:bg-stone-800/80 p-4 sm:p-5 flex flex-col sm:flex-row items-center justify-between gap-4 shadow-sm hover:shadow-md hover:border-brand-400 transition-all relative overflow-hidden">
+        
+        <div class="flex items-center gap-3.5 text-left w-full sm:w-auto">
+          <div class="w-11 h-11 rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center font-bold text-lg shrink-0">
+            <i class="fa-solid fa-book-bookmark"></i>
+          </div>
+          <div>
+            <div class="flex items-center gap-2">
+              <span class="text-[9px] font-bold uppercase tracking-widest bg-stone-200/70 dark:bg-stone-700/80 text-stone-500 dark:text-stone-300 px-1.5 py-0.5 rounded">AD</span>
+              <span class="text-[11px] font-bold text-emerald-600 dark:text-emerald-400">스폰서 추천 도서</span>
+            </div>
+            <h4 class="text-sm sm:text-base font-bold text-stone-800 dark:text-stone-100 mt-0.5 break-keep">
+              2026 베스트셀러 [가장 쉬운 스페인어 첫걸음] 30% 한정 패키지
+            </h4>
+            <p class="text-xs text-stone-500 dark:text-stone-400 mt-0.5 hidden sm:block">
+              원어민 MP3 음원 무료 제공 &amp; 왕초보 맞춤 필수 어휘 1,000선
+            </p>
           </div>
         </div>
-        <button class="px-3.5 py-1.5 rounded-lg bg-stone-100 dark:bg-stone-700 text-stone-600 dark:text-stone-300 text-xs font-medium hover:bg-stone-200 shrink-0">
-          자세히 알아보기
-        </button>
+
+        <!-- 액션 및 광고주 문의 버튼 -->
+        <div class="flex items-center gap-2 w-full sm:w-auto shrink-0 justify-end">
+          <button onclick="openAdInquiryModal('infeed')" class="opacity-80 group-hover:opacity-100 text-xs text-stone-500 dark:text-stone-400 hover:text-brand-600 dark:hover:text-brand-400 font-medium px-2 py-1 transition-colors flex items-center gap-1" title="이 영역에 광고 게재하기">
+            <i class="fa-solid fa-bullhorn text-[10px]"></i>
+            <span class="text-[11px]">광고 문의</span>
+          </button>
+          <button onclick="openAdInquiryModal('infeed')" class="px-4 py-2 rounded-xl bg-stone-100 hover:bg-stone-200 dark:bg-stone-700 dark:hover:bg-stone-600 text-stone-700 dark:text-stone-200 text-xs font-bold transition-all shrink-0">
+            자세히 알아보기
+          </button>
+        </div>
+
       </div>
     </div>
 
@@ -643,6 +705,77 @@
     </div>
   </div>
 
+  <!-- ================= 광고 및 스폰서 제휴 문의 모달 ================= -->
+  <div id="ad-inquiry-modal" class="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm hidden items-center justify-center p-4">
+    <div class="bg-white dark:bg-stone-900 rounded-2xl max-w-lg w-full p-6 sm:p-8 shadow-2xl border border-stone-200 dark:border-stone-800 max-h-[90vh] overflow-y-auto animate-bounce-short">
+      
+      <div class="flex items-center justify-between pb-4 border-b border-stone-100 dark:border-stone-800">
+        <div class="flex items-center gap-2">
+          <span class="w-8 h-8 rounded-full bg-brand-100 dark:bg-brand-950 text-brand-600 dark:text-brand-400 flex items-center justify-center font-bold">
+            <i class="fa-solid fa-bullhorn text-sm"></i>
+          </span>
+          <h3 class="text-lg font-bold text-stone-900 dark:text-white">스폰서 광고 &amp; 제휴 안내</h3>
+        </div>
+        <button onclick="closeAdInquiryModal()" class="text-stone-400 hover:text-stone-600 dark:hover:text-stone-200 p-1">
+          <i class="fa-solid fa-xmark text-lg"></i>
+        </button>
+      </div>
+
+      <div class="mt-4 space-y-4 text-xs sm:text-sm text-stone-600 dark:text-stone-300">
+        <p class="leading-relaxed break-keep">
+          <strong>HolaVoca</strong>는 매일 스페인어 단어를 공부하는 열정적인 언어 학습자(대학생, 직장인, 해외 여행 준비자)들이 반복 방문하는 교육 플랫폼입니다.
+        </p>
+
+        <!-- 제공 상품 카드 -->
+        <div class="space-y-2.5">
+          <div class="p-3.5 rounded-xl bg-stone-50 dark:bg-stone-800/60 border border-stone-200/80 dark:border-stone-700 flex items-start gap-3">
+            <span class="w-6 h-6 rounded-md bg-amber-500/10 text-amber-600 dark:text-amber-400 flex items-center justify-center font-bold text-xs shrink-0 mt-0.5">1</span>
+            <div>
+              <h4 class="font-bold text-stone-800 dark:text-stone-100">상단 메인 띠배너 (728x90 / 반응형)</h4>
+              <p class="text-xs text-stone-500 dark:text-stone-400 mt-0.5">서비스 접속 시 가장 먼저 노출되는 최상단 고주목도 배너</p>
+            </div>
+          </div>
+
+          <div class="p-3.5 rounded-xl bg-stone-50 dark:bg-stone-800/60 border border-stone-200/80 dark:border-stone-700 flex items-start gap-3">
+            <span class="w-6 h-6 rounded-md bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center font-bold text-xs shrink-0 mt-0.5">2</span>
+            <div>
+              <h4 class="font-bold text-stone-800 dark:text-stone-100">퀴즈 인피드 네이티브 카드</h4>
+              <p class="text-xs text-stone-500 dark:text-stone-400 mt-0.5">단어 퀴즈 풀이 사이 자연스럽게 어우러지는 높은 CTR의 콘텐츠형 광고</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- 문의 안내 박스 -->
+        <div class="p-4 rounded-xl bg-brand-50 dark:bg-brand-950/40 border border-brand-200 dark:border-brand-900/60 text-center">
+          <p class="text-xs font-semibold text-brand-800 dark:text-brand-300 mb-1">
+            광고 집행 및 단가 제안 문의
+          </p>
+          <div class="inline-flex items-center gap-2 bg-white dark:bg-stone-800 px-3 py-1.5 rounded-lg border border-brand-200 dark:border-brand-800 font-mono text-xs font-bold text-stone-800 dark:text-stone-200 my-1">
+            <span id="ad-email-text">ads@holavoca.com</span>
+            <button onclick="copyAdEmail()" class="text-brand-600 hover:text-brand-700 text-xs font-sans font-normal ml-1 underline" title="이메일 복사">
+              복사
+            </button>
+          </div>
+          <p class="text-[11px] text-stone-500 dark:text-stone-400 mt-1">
+            브랜드명과 원하시는 배너 위치를 남겨주시면 24시간 내 회신드립니다.
+          </p>
+        </div>
+
+      </div>
+
+      <div class="mt-6 flex gap-2">
+        <a id="ad-mail-link" href="mailto:ads@holavoca.com?subject=%5BHolaVoca%20%EA%B4%91%EA%B3%A0%EB%AC%B8%EC%9D%98%5D%20%EB%B8%8C%EB%9E%9C%EB%93%9C%20%EC%A0%9C%ED%9C%B4%20%EB%AC%B8%EC%9D%98" class="flex-1 py-3 px-4 rounded-xl bg-brand-500 hover:bg-brand-600 text-white font-bold text-sm text-center shadow-md shadow-brand-500/20 transition-all flex items-center justify-center gap-2">
+          <i class="fa-solid fa-envelope text-xs"></i>
+          <span>메일로 광고 문의하기</span>
+        </a>
+        <button onclick="closeAdInquiryModal()" class="py-3 px-4 rounded-xl bg-stone-100 hover:bg-stone-200 dark:bg-stone-800 dark:hover:bg-stone-700 text-stone-700 dark:text-stone-300 text-sm font-semibold transition-all">
+          닫기
+        </button>
+      </div>
+
+    </div>
+  </div>
+
   <!-- ================= 8. 자바스크립트 비즈니스 로직 ================= -->
   <script>
     /* ========================================================
@@ -881,15 +1014,15 @@
       cardBadge.innerText = getCategoryName(currentWord.cat);
       feedbackBar.classList.add('hidden');
 
-      // 모드에 따른 문제 표시
+      // 모드에 따른 문제 표시 (예문 폰트 및 스타일 강화)
       if (currentMode === 'es_to_ko') {
         // 스페인어 -> 한글 맞추기
         questionText.innerText = currentWord.es;
-        exampleBox.innerHTML = `"${currentWord.ex_es}"`;
+        exampleBox.innerHTML = `<span class="font-bold text-brand-600 dark:text-brand-400 text-base sm:text-lg">"${currentWord.ex_es}"</span> <span class="text-stone-500 dark:text-stone-400 text-xs sm:text-sm block sm:inline sm:ml-2">(${currentWord.ex_ko})</span>`;
       } else {
         // 한글 -> 스페인어 맞추기
         questionText.innerText = currentWord.ko;
-        exampleBox.innerHTML = `"${currentWord.ex_ko}"`;
+        exampleBox.innerHTML = `<span class="font-bold text-brand-600 dark:text-brand-400 text-base sm:text-lg">"${currentWord.ex_ko}"</span> <span class="text-stone-500 dark:text-stone-400 text-xs sm:text-sm block sm:inline sm:ml-2">(${currentWord.ex_es})</span>`;
       }
 
       // 3지선다 버튼 생성
@@ -1081,6 +1214,28 @@
       const modal = document.getElementById('deploy-modal');
       modal.classList.add('hidden');
       modal.classList.remove('flex');
+    }
+
+    /* 스폰서 광고 문의 모달 */
+    function openAdInquiryModal(slotName) {
+      const modal = document.getElementById('ad-inquiry-modal');
+      modal.classList.remove('hidden');
+      modal.classList.add('flex');
+    }
+
+    function closeAdInquiryModal() {
+      const modal = document.getElementById('ad-inquiry-modal');
+      modal.classList.add('hidden');
+      modal.classList.remove('flex');
+    }
+
+    function copyAdEmail() {
+      const email = document.getElementById('ad-email-text').innerText;
+      navigator.clipboard.writeText(email).then(() => {
+        alert("광고 제휴 문의 이메일 주소(" + email + ")가 복사되었습니다!");
+      }).catch(() => {
+        alert("이메일: " + email);
+      });
     }
 
     /* ========================================================
