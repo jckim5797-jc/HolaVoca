@@ -1046,11 +1046,185 @@
       updateQuizCardUI();
     }
 
+    const EXAMPLE_BLANK = '<span class="inline-block min-w-[2.75rem] border-b-2 border-brand-400 dark:border-brand-500 mx-0.5 align-baseline" aria-hidden="true">&nbsp;&nbsp;&nbsp;&nbsp;</span>';
+    const EXAMPLE_BLANK_SENTINEL = '\u0000BLANK\u0000';
+
+    function escapeHtml(str) {
+      return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;');
+    }
+
+    function escapeRegExp(str) {
+      return String(str).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    }
+
+    function stripExampleMarkers(text) {
+      return String(text || '').replace(/\[\[(.*?)\]\]/g, '$1');
+    }
+
+    function splitMeaningGlosses(meaning) {
+      return String(meaning || '')
+        .replace(/\([^)]*\)/g, ' ')
+        .split(/[\/,·;]|또는/)
+        .map((part) => part.replace(/^~/, '').trim())
+        .filter((part) => part.length >= 1);
+    }
+
+    function koreanMeaningVariants(gloss) {
+      const variants = new Set([gloss]);
+      if (gloss === '하다') {
+        ['합니다', '해요', '해서', '하는', '하고', '했다', '하면', '해'].forEach((v) => variants.add(v));
+      }
+      if (gloss.endsWith('하다') && gloss.length > 2) {
+        const stem = gloss.slice(0, -2);
+        [stem + '하', stem + '해', stem + '합', stem + '한', stem + '했', stem + '합니다', stem + '해요'].forEach((v) => variants.add(v));
+      }
+      if (gloss.endsWith('되다') && gloss.length > 2) {
+        const stem = gloss.slice(0, -2);
+        [stem + '되', stem + '돼', stem + '됩', stem + '된', stem + '됐'].forEach((v) => variants.add(v));
+      }
+      if (gloss === '이다' || gloss.endsWith('이다')) {
+        ['입니다', '이에요', '예요', '이야', '인가', '인 ', '이다'].forEach((v) => variants.add(v.trim()));
+      }
+      if (gloss.endsWith('있다')) {
+        ['있습니다', '있어요', '있는', '있고', '있어', '있었'].forEach((v) => variants.add(v));
+      }
+      if (gloss.endsWith('없다')) {
+        ['없습니다', '없어요', '없는', '없고', '없어'].forEach((v) => variants.add(v));
+      }
+      if (gloss.endsWith('다') && gloss.length >= 2) {
+        const stem = gloss.slice(0, -1);
+        [stem + '세요', stem + '요', stem + '습니다', stem + '십니다'].forEach((v) => variants.add(v));
+        if (stem.length >= 2) variants.add(stem);
+      }
+      const extras = [...variants].filter((v) => v !== gloss && v.length >= 2);
+      return [gloss, ...extras].filter(Boolean).sort((a, b) => b.length - a.length);
+    }
+
+    function englishMeaningVariants(gloss) {
+      const token = gloss.toLowerCase().replace(/^to\s+/, '').trim();
+      if (!token || token.length < 2) return [];
+      const variants = new Set([token]);
+      if (token.endsWith('y') && token.length > 2 && !/[aeiou]y$/.test(token)) {
+        variants.add(token.slice(0, -1) + 'ies');
+        variants.add(token.slice(0, -1) + 'ied');
+      }
+      if (token.endsWith('e')) {
+        variants.add(token + 'd');
+        variants.add(token.slice(0, -1) + 'ing');
+      } else {
+        variants.add(token + 'ed');
+        variants.add(token + 'ing');
+      }
+      variants.add(token + 's');
+      variants.add(token + 'es');
+      return [...variants].sort((a, b) => b.length - a.length);
+    }
+
+    function maskAllSubstrings(sentence, needles) {
+      const sorted = [...new Set((needles || []).filter(Boolean))].sort((a, b) => b.length - a.length);
+      if (!sentence || !sorted.length) return null;
+      let result = '';
+      let i = 0;
+      let hitCount = 0;
+      while (i < sentence.length) {
+        const hit = sorted.find((needle) => sentence.startsWith(needle, i));
+        if (hit) {
+          result += EXAMPLE_BLANK_SENTINEL;
+          i += hit.length;
+          hitCount += 1;
+        } else {
+          result += sentence[i];
+          i += 1;
+        }
+      }
+      return hitCount ? result : null;
+    }
+
+    function maskAllEnglishWords(sentence, needles) {
+      const sorted = [...new Set((needles || []).filter((n) => n && n.length >= 2))].sort((a, b) => b.length - a.length);
+      if (!sentence || !sorted.length) return null;
+      const re = new RegExp(`(^|[^A-Za-z])(${sorted.map(escapeRegExp).join('|')})(?=[^A-Za-z]|$)`, 'gi');
+      let hitCount = 0;
+      const masked = sentence.replace(re, (full, prefix) => {
+        hitCount += 1;
+        return prefix + EXAMPLE_BLANK_SENTINEL;
+      });
+      return hitCount ? masked : null;
+    }
+
+    function maskMeaningInSentence(sentence, meaning, lang) {
+      const glosses = splitMeaningGlosses(meaning);
+      if (lang === 'en') {
+        const needles = glosses.flatMap(englishMeaningVariants);
+        return maskAllEnglishWords(sentence, needles);
+      }
+      const needles = glosses.flatMap(koreanMeaningVariants);
+      return maskAllSubstrings(sentence, needles);
+    }
+
+    function maskSpanishHeadword(sentence, esWord) {
+      const word = String(esWord || '').trim();
+      if (!sentence || !word) return null;
+      const wordRe = new RegExp(`(^|[^A-Za-záéíóúüñÁÉÍÓÚÜÑ])(${escapeRegExp(word)})(?=[^A-Za-záéíóúüñÁÉÍÓÚÜÑ]|$)`, 'i');
+      const exact = wordRe.exec(sentence);
+      if (exact) {
+        const idx = exact.index + exact[1].length;
+        return sentence.slice(0, idx) + EXAMPLE_BLANK_SENTINEL + sentence.slice(idx + exact[2].length);
+      }
+      const stem = word.replace(/se$/i, '').replace(/[aei]r$/i, '');
+      if (stem.length < 3) return null;
+      const tokens = sentence.split(/([^A-Za-záéíóúüñÁÉÍÓÚÜÑ]+)/);
+      let masked = false;
+      const out = tokens.map((token) => {
+        if (masked || !/^[A-Za-záéíóúüñÁÉÍÓÚÜÑ]+$/.test(token)) return token;
+        if (token.toLowerCase().startsWith(stem.toLowerCase())) {
+          masked = true;
+          return EXAMPLE_BLANK_SENTINEL;
+        }
+        return token;
+      });
+      return masked ? out.join('') : null;
+    }
+
+    function finalizeExampleHtml(text, fallbackBlank) {
+      const source = (text == null && fallbackBlank) ? EXAMPLE_BLANK_SENTINEL : String(text || '');
+      return escapeHtml(source).split(EXAMPLE_BLANK_SENTINEL).join(EXAMPLE_BLANK);
+    }
+
+    function buildExamplePairHtml(primary, secondary, reveal) {
+      const primaryHtml = `"${finalizeExampleHtml(primary, false)}"`;
+      const secondaryHtml = finalizeExampleHtml(secondary, !reveal && secondary == null);
+      return `${primaryHtml} <span class="text-stone-400 dark:text-stone-500 font-normal not-italic ml-1">(${secondaryHtml})</span>`;
+    }
+
+    function renderExampleBox() {
+      const exampleBox = document.getElementById('example-box');
+      if (!exampleBox || !currentWord) return;
+
+      const isEn = (currentLang === 'en');
+      const reveal = isAnswered;
+      const cleanEs = stripExampleMarkers(currentWord.ex_es);
+      const transRaw = isEn ? currentWord.ex_en : currentWord.ex_ko;
+      const cleanTrans = stripExampleMarkers(transRaw);
+      const meaning = isEn ? currentWord.en : currentWord.ko;
+
+      if (currentMode === 'es_to_ko') {
+        const maskedTrans = reveal ? cleanTrans : (maskMeaningInSentence(cleanTrans, meaning, isEn ? 'en' : 'ko') || cleanTrans);
+        exampleBox.innerHTML = buildExamplePairHtml(cleanEs, maskedTrans, reveal);
+      } else {
+        const maskedEs = reveal ? cleanEs : (maskSpanishHeadword(cleanEs, currentWord.es) || null);
+        exampleBox.innerHTML = buildExamplePairHtml(cleanTrans, maskedEs, reveal);
+      }
+    }
+
     function updateQuizCardUI() {
       if (!currentWord) return;
       const cardBadge = document.getElementById('card-badge');
       const questionText = document.getElementById('question-text');
-      const exampleBox = document.getElementById('example-box');
       const optionsContainer = document.getElementById('options-container');
       const feedbackBar = document.getElementById('feedback-bar');
 
@@ -1058,19 +1232,16 @@
       if (feedbackBar) feedbackBar.classList.add('hidden');
 
       const isEn = (currentLang === 'en');
-      const cleanEs = currentWord.ex_es.replace(/\[\[(.*?)\]\]/g, '$1');
-      const transEx = isEn ? currentWord.ex_en : currentWord.ex_ko;
-      const cleanTrans = transEx.replace(/\[\[(.*?)\]\]/g, '$1');
 
       if (currentMode === 'es_to_ko') {
         // 스페인어 -> 한국어(또는 영어) 맞추기
         questionText.innerText = currentWord.es;
-        exampleBox.innerHTML = `"${cleanEs}" <span class="text-stone-400 dark:text-stone-500 font-normal ml-1">(${cleanTrans})</span>`;
       } else {
         // 한국어(또는 영어) -> 스페인어 맞추기
         questionText.innerText = isEn ? currentWord.en : currentWord.ko;
-        exampleBox.innerHTML = `"${cleanTrans}" <span class="text-stone-400 dark:text-stone-500 font-normal ml-1">(${cleanEs})</span>`;
       }
+
+      renderExampleBox();
 
       // 3지선다 버튼 생성
       optionsContainer.innerHTML = '';
@@ -1154,6 +1325,7 @@
       document.getElementById('quiz-score').innerText = score;
       document.getElementById('quiz-combo').innerText = combo;
       feedbackBar.classList.remove('hidden');
+      renderExampleBox();
     }
 
     function nextQuestion() {
