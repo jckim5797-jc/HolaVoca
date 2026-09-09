@@ -958,21 +958,245 @@
       playTone(220, 'sawtooth', 0.2);
     }
 
-    /* Web Speech API (원어민 스페인어 발음 TTS) */
+    /* ========================================================
+       원어민 스페인어 발음 오디오 엔진 (Google TTS MP3 + Web Speech API 이중화)
+       ======================================================== */
+    let currentAudio = null;
+    let currentUtterance = null; // 크롬 GC(가비지 컬렉션) 버그 방지 전역 참조
+
     function speakSpanish(text) {
+      if (!text) return;
+      const cleanText = text.trim();
+
+      try {
+        // 1. 구글 번역 고품질 원어민 음성 MP3 즉각 재생
+        if (currentAudio) {
+          currentAudio.pause();
+          currentAudio.currentTime = 0;
+        }
+        const encoded = encodeURIComponent(cleanText);
+        const ttsUrl = `https://translate.google.com/translate_tts?ie=UTF-8&client=tw-ob&tl=es&q=${encoded}`;
+        currentAudio = new Audio(ttsUrl);
+        currentAudio.onerror = () => {
+          fallbackSpeechSynthesis(cleanText);
+        };
+
+        const playPromise = currentAudio.play();
+        if (playPromise !== undefined) {
+          playPromise.catch((err) => {
+            // 네트워크 차단 또는 정책 제한 시 브라우저 내장 Web Speech API로 자동 폴백
+            fallbackSpeechSynthesis(cleanText);
+          });
+        }
+      } catch (e) {
+        fallbackSpeechSynthesis(cleanText);
+      }
+    }
+
+    function fallbackSpeechSynthesis(text) {
       if ('speechSynthesis' in window) {
-        window.speechSynthesis.cancel();
-        const utterance = new SpeechSynthesisUtterance(text);
-        utterance.lang = 'es-ES';
-        utterance.rate = 0.92;
-        window.speechSynthesis.speak(utterance);
+        try {
+          window.speechSynthesis.resume();
+          window.speechSynthesis.cancel();
+
+          const utterance = new SpeechSynthesisUtterance(text);
+          window.currentUtterance = utterance;
+          utterance.lang = 'es-ES';
+          utterance.rate = 0.92;
+
+          const voices = window.speechSynthesis.getVoices();
+          const esVoice = voices.find(v => v.lang && (v.lang.toLowerCase().startsWith('es') || v.lang.toLowerCase().includes('es')));
+          if (esVoice) utterance.voice = esVoice;
+
+          setTimeout(() => {
+            window.speechSynthesis.speak(utterance);
+          }, 40);
+        } catch (e) {
+          console.warn("TTS fallback failed", e);
+        }
       }
     }
 
     function playCurrentWordAudio() {
       initAudio();
       if (currentWord) {
+        // 확성기 버튼 클릭 시 시각적 애니메이션 피드백
+        const btn = document.getElementById('tts-btn');
+        if (btn) {
+          btn.classList.add('scale-125', 'ring-2', 'ring-brand-500', 'bg-brand-50');
+          setTimeout(() => btn.classList.remove('scale-125', 'ring-2', 'ring-brand-500', 'bg-brand-50'), 300);
+        }
         speakSpanish(currentWord.es);
+      }
+    }
+
+    function escapeRegex(str) {
+      return str.replace(/[.*+?^${}()|[\]\]/g, '\$&');
+    }
+
+    /* ========================================================
+       스페인어 주요 불규칙 동사 활용형 사전 (예문 마스킹 매칭용)
+       ======================================================== */
+    const ES_IRREGULARS = {
+      'ser': ['soy', 'eres', 'es', 'somos', 'sois', 'son', 'era', 'eras', 'éramos', 'eran', 'fui', 'fuiste', 'fue', 'fuimos', 'fueron', 'sido'],
+      'estar': ['estoy', 'estás', 'está', 'estamos', 'estáis', 'están', 'estaba', 'estuve', 'estuvo', 'estado'],
+      'ir': ['voy', 'vas', 'va', 'vamos', 'vais', 'van', 'iba', 'fui', 'fuiste', 'fue', 'fuimos', 'fueron', 'vaya', 've'],
+      'haber': ['hay', 'he', 'has', 'ha', 'hemos', 'habéis', 'han', 'había', 'hubo'],
+      'tener': ['tengo', 'tienes', 'tiene', 'tenemos', 'tienen', 'tuve', 'tuvo', 'tenía', 'ten'],
+      'hacer': ['hago', 'haces', 'hace', 'hacemos', 'hacen', 'hice', 'hizo', 'haz', 'hecho'],
+      'decir': ['digo', 'dices', 'dice', 'decimos', 'dicen', 'dije', 'dijo', 'di', 'dicho', 'dime', 'dile'],
+      'dar': ['doy', 'das', 'da', 'damos', 'dan', 'di', 'dio', 'dame', 'dale'],
+      'ver': ['veo', 'ves', 've', 'vemos', 'ven', 'vi', 'vio', 'visto'],
+      'saber': ['sé', 'sabes', 'sabe', 'sabemos', 'saben', 'supe', 'supo'],
+      'poder': ['puedo', 'puedes', 'puede', 'podemos', 'pueden', 'pude', 'pudo'],
+      'poner': ['pongo', 'pones', 'pone', 'ponemos', 'ponen', 'puse', 'puso', 'pon', 'puesto'],
+      'salir': ['salgo', 'sales', 'sale', 'salimos', 'salen', 'sal', 'salió'],
+      'venir': ['vengo', 'vienes', 'viene', 'venimos', 'vienen', 'vine', 'vino', 'ven'],
+      'querer': ['quiero', 'quieres', 'quiere', 'queremos', 'quieren', 'quise', 'quiso']
+    };
+
+    /* 한국어 단어 활용 어간 및 변형 추출 함수 */
+    function getKoreanStems(token) {
+      const stems = [token];
+      const clean = token.replace(/\(.*?\)/g, '').replace(/~/g, '').trim();
+      if (!clean) return stems;
+      stems.push(clean);
+
+      if (clean.endsWith('하다')) {
+        const base = clean.slice(0, -2);
+        stems.push(base, base + '합', base + '해', base + '하', base + '했');
+      } else if (clean.endsWith('되다')) {
+        const base = clean.slice(0, -2);
+        stems.push(base, base + '됩', base + '돼', base + '되');
+      } else if (clean.endsWith('이다')) {
+        const base = clean.slice(0, -2);
+        if (base) stems.push(base, base + '입', base + '이');
+        else stems.push('입니다', '이에요', '예요');
+      } else if (clean.endsWith('다')) {
+        const stem = clean.slice(0, -1);
+        stems.push(stem);
+        if (stem.length === 1) {
+          stems.push(stem + 'ㅂ');
+          if (stem === '보') stems.push('봅', '봐');
+          else if (stem === '오') stems.push('옵', '와');
+          else if (stem === '가') stems.push('갑');
+          else if (stem === '사') stems.push('삽');
+          else if (stem === '자') stems.push('잡');
+          else if (stem === '주') stems.push('줘', '줍');
+          else if (stem === '쓰') stems.push('씁', '써');
+          else if (stem === '크') stems.push('큽', '커');
+        }
+      }
+      return Array.from(new Set(stems.filter(s => s && s.length >= 1)));
+    }
+
+    /* ========================================================
+       예문 힌트 마스킹 & 정답 선택 후 공개 로직
+       ======================================================== */
+    function getMaskedSentence(wordObj, mode, lang, revealed) {
+      const isEn = (lang === 'en');
+      const esText = wordObj.ex_es.replace(/\[\[(.*?)\]\]/g, '$1');
+      const transText = (isEn ? wordObj.ex_en : wordObj.ex_ko).replace(/\[\[(.*?)\]\]/g, '$1');
+      const targetMeaning = isEn ? wordObj.en : wordObj.ko;
+
+      const maskHtml = `<span class="inline-block font-bold text-brand-600 dark:text-brand-400 bg-amber-100/90 dark:bg-amber-950/70 px-2 py-0.5 rounded border border-dashed border-brand-400 tracking-wider shadow-sm animate-pulse-fast">[ ? ? ? ]</span>`;
+
+      if (mode === 'es_to_ko') {
+        // 스페인어 -> 한국어(영어): 스페인어 원문은 표시하고 번역문 속 단어 뜻을 마스킹
+        if (revealed) {
+          let highlighted = transText;
+          const cleanTokens = targetMeaning.replace(/\(.*?\)/g, '').split(/[,/~]/).map(s => s.trim()).filter(Boolean);
+          let replaced = false;
+
+          for (const token of cleanTokens) {
+            const stems = isEn ? [token] : getKoreanStems(token);
+            for (const stem of stems) {
+              if (stem && highlighted.includes(stem)) {
+                const re = isEn ? new RegExp(`\b${escapeRegex(stem)}\b`, 'i') : new RegExp(`(\S*${escapeRegex(stem)}\S*)`, 'g');
+                highlighted = highlighted.replace(re, `<span class="font-bold text-emerald-700 dark:text-emerald-300 bg-emerald-100 dark:bg-emerald-950/70 px-2 py-0.5 rounded border border-emerald-500 underline underline-offset-2">$1</span>`);
+                replaced = true;
+                break;
+              }
+            }
+            if (replaced) break;
+          }
+
+          if (!replaced) {
+            highlighted = `${highlighted} <span class="font-bold text-emerald-700 dark:text-emerald-300 bg-emerald-100 dark:bg-emerald-950/70 px-2 py-0.5 rounded border border-emerald-500 underline underline-offset-2">(${targetMeaning})</span>`;
+          }
+          return `"${esText}" <span class="text-stone-500 dark:text-stone-400 font-normal ml-1">(${highlighted})</span>`;
+        } else {
+          let masked = transText;
+          const cleanTokens = targetMeaning.replace(/\(.*?\)/g, '').split(/[,/~]/).map(s => s.trim()).filter(Boolean);
+          let replaced = false;
+
+          for (const token of cleanTokens) {
+            const stems = isEn ? [token] : getKoreanStems(token);
+            for (const stem of stems) {
+              if (stem && masked.includes(stem)) {
+                const re = isEn ? new RegExp(`\b${escapeRegex(stem)}\b`, 'i') : new RegExp(`(\S*${escapeRegex(stem)}\S*)`, 'g');
+                masked = masked.replace(re, maskHtml);
+                replaced = true;
+                break;
+              }
+            }
+            if (replaced) break;
+          }
+
+          if (!replaced) {
+            masked = `${masked.replace(/([.?!]+)$/, '')} ${maskHtml}`;
+          }
+          return `"${esText}" <span class="text-stone-500 dark:text-stone-400 font-normal ml-1">(${masked})</span>`;
+        }
+      } else {
+        // 한국어(영어) -> 스페인어: 번역문은 표시하고 스페인어 예문 속 단어를 마스킹
+        const esWord = wordObj.es.trim().toLowerCase();
+        const candidates = [esWord];
+        if (ES_IRREGULARS[esWord]) {
+          candidates.push(...ES_IRREGULARS[esWord]);
+        }
+        const stem = esWord.replace(/(?:ar|er|ir)$/, '');
+        if (stem.length >= 2) {
+          candidates.push(stem);
+          if (stem.includes('o')) candidates.push(stem.replace('o', 'ue'));
+          if (stem.includes('u')) candidates.push(stem.replace('u', 'ue'));
+          if (stem.includes('e')) {
+            candidates.push(stem.replace('e', 'ie'));
+            candidates.push(stem.replace('e', 'i'));
+          }
+        }
+
+        if (revealed) {
+          let highlightedEs = esText;
+          let matched = false;
+          for (const cand of candidates) {
+            const re = new RegExp(`\b${escapeRegex(cand)}[a-záéíóúñ]*(?:me|te|se|nos|os|le|les|lo|la|los|las)?\b`, 'gi');
+            if (re.test(highlightedEs)) {
+              highlightedEs = highlightedEs.replace(re, (m) => `<span class="font-bold text-emerald-700 dark:text-emerald-300 bg-emerald-100 dark:bg-emerald-950/70 px-2 py-0.5 rounded border border-emerald-500 underline underline-offset-2">${m}</span>`);
+              matched = true;
+              break;
+            }
+          }
+          if (!matched) {
+            highlightedEs = `<span class="font-bold text-emerald-700 dark:text-emerald-300 bg-emerald-100 dark:bg-emerald-950/70 px-2 py-0.5 rounded border border-emerald-500 underline underline-offset-2">${wordObj.es}</span> — ${highlightedEs}`;
+          }
+          return `"${highlightedEs}" <span class="text-stone-500 dark:text-stone-400 font-normal ml-1">(${transText})</span>`;
+        } else {
+          let maskedEs = esText;
+          let matched = false;
+          for (const cand of candidates) {
+            const re = new RegExp(`\b${escapeRegex(cand)}[a-záéíóúñ]*(?:me|te|se|nos|os|le|les|lo|la|los|las)?\b`, 'gi');
+            if (re.test(maskedEs)) {
+              maskedEs = maskedEs.replace(re, maskHtml);
+              matched = true;
+              break;
+            }
+          }
+          if (!matched) {
+            maskedEs = `${maskHtml} ${maskedEs}`;
+          }
+          return `"${maskedEs}" <span class="text-stone-500 dark:text-stone-400 font-normal ml-1">(${transText})</span>`;
+        }
       }
     }
 
@@ -1046,185 +1270,11 @@
       updateQuizCardUI();
     }
 
-    const EXAMPLE_BLANK = '<span class="inline-block min-w-[2.75rem] border-b-2 border-brand-400 dark:border-brand-500 mx-0.5 align-baseline" aria-hidden="true">&nbsp;&nbsp;&nbsp;&nbsp;</span>';
-    const EXAMPLE_BLANK_SENTINEL = '\u0000BLANK\u0000';
-
-    function escapeHtml(str) {
-      return String(str)
-        .replace(/&/g, '&amp;')
-        .replace(/</g, '&lt;')
-        .replace(/>/g, '&gt;')
-        .replace(/"/g, '&quot;');
-    }
-
-    function escapeRegExp(str) {
-      return String(str).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-    }
-
-    function stripExampleMarkers(text) {
-      return String(text || '').replace(/\[\[(.*?)\]\]/g, '$1');
-    }
-
-    function splitMeaningGlosses(meaning) {
-      return String(meaning || '')
-        .replace(/\([^)]*\)/g, ' ')
-        .split(/[\/,·;]|또는/)
-        .map((part) => part.replace(/^~/, '').trim())
-        .filter((part) => part.length >= 1);
-    }
-
-    function koreanMeaningVariants(gloss) {
-      const variants = new Set([gloss]);
-      if (gloss === '하다') {
-        ['합니다', '해요', '해서', '하는', '하고', '했다', '하면', '해'].forEach((v) => variants.add(v));
-      }
-      if (gloss.endsWith('하다') && gloss.length > 2) {
-        const stem = gloss.slice(0, -2);
-        [stem + '하', stem + '해', stem + '합', stem + '한', stem + '했', stem + '합니다', stem + '해요'].forEach((v) => variants.add(v));
-      }
-      if (gloss.endsWith('되다') && gloss.length > 2) {
-        const stem = gloss.slice(0, -2);
-        [stem + '되', stem + '돼', stem + '됩', stem + '된', stem + '됐'].forEach((v) => variants.add(v));
-      }
-      if (gloss === '이다' || gloss.endsWith('이다')) {
-        ['입니다', '이에요', '예요', '이야', '인가', '인 ', '이다'].forEach((v) => variants.add(v.trim()));
-      }
-      if (gloss.endsWith('있다')) {
-        ['있습니다', '있어요', '있는', '있고', '있어', '있었'].forEach((v) => variants.add(v));
-      }
-      if (gloss.endsWith('없다')) {
-        ['없습니다', '없어요', '없는', '없고', '없어'].forEach((v) => variants.add(v));
-      }
-      if (gloss.endsWith('다') && gloss.length >= 2) {
-        const stem = gloss.slice(0, -1);
-        [stem + '세요', stem + '요', stem + '습니다', stem + '십니다'].forEach((v) => variants.add(v));
-        if (stem.length >= 2) variants.add(stem);
-      }
-      const extras = [...variants].filter((v) => v !== gloss && v.length >= 2);
-      return [gloss, ...extras].filter(Boolean).sort((a, b) => b.length - a.length);
-    }
-
-    function englishMeaningVariants(gloss) {
-      const token = gloss.toLowerCase().replace(/^to\s+/, '').trim();
-      if (!token || token.length < 2) return [];
-      const variants = new Set([token]);
-      if (token.endsWith('y') && token.length > 2 && !/[aeiou]y$/.test(token)) {
-        variants.add(token.slice(0, -1) + 'ies');
-        variants.add(token.slice(0, -1) + 'ied');
-      }
-      if (token.endsWith('e')) {
-        variants.add(token + 'd');
-        variants.add(token.slice(0, -1) + 'ing');
-      } else {
-        variants.add(token + 'ed');
-        variants.add(token + 'ing');
-      }
-      variants.add(token + 's');
-      variants.add(token + 'es');
-      return [...variants].sort((a, b) => b.length - a.length);
-    }
-
-    function maskAllSubstrings(sentence, needles) {
-      const sorted = [...new Set((needles || []).filter(Boolean))].sort((a, b) => b.length - a.length);
-      if (!sentence || !sorted.length) return null;
-      let result = '';
-      let i = 0;
-      let hitCount = 0;
-      while (i < sentence.length) {
-        const hit = sorted.find((needle) => sentence.startsWith(needle, i));
-        if (hit) {
-          result += EXAMPLE_BLANK_SENTINEL;
-          i += hit.length;
-          hitCount += 1;
-        } else {
-          result += sentence[i];
-          i += 1;
-        }
-      }
-      return hitCount ? result : null;
-    }
-
-    function maskAllEnglishWords(sentence, needles) {
-      const sorted = [...new Set((needles || []).filter((n) => n && n.length >= 2))].sort((a, b) => b.length - a.length);
-      if (!sentence || !sorted.length) return null;
-      const re = new RegExp(`(^|[^A-Za-z])(${sorted.map(escapeRegExp).join('|')})(?=[^A-Za-z]|$)`, 'gi');
-      let hitCount = 0;
-      const masked = sentence.replace(re, (full, prefix) => {
-        hitCount += 1;
-        return prefix + EXAMPLE_BLANK_SENTINEL;
-      });
-      return hitCount ? masked : null;
-    }
-
-    function maskMeaningInSentence(sentence, meaning, lang) {
-      const glosses = splitMeaningGlosses(meaning);
-      if (lang === 'en') {
-        const needles = glosses.flatMap(englishMeaningVariants);
-        return maskAllEnglishWords(sentence, needles);
-      }
-      const needles = glosses.flatMap(koreanMeaningVariants);
-      return maskAllSubstrings(sentence, needles);
-    }
-
-    function maskSpanishHeadword(sentence, esWord) {
-      const word = String(esWord || '').trim();
-      if (!sentence || !word) return null;
-      const wordRe = new RegExp(`(^|[^A-Za-záéíóúüñÁÉÍÓÚÜÑ])(${escapeRegExp(word)})(?=[^A-Za-záéíóúüñÁÉÍÓÚÜÑ]|$)`, 'i');
-      const exact = wordRe.exec(sentence);
-      if (exact) {
-        const idx = exact.index + exact[1].length;
-        return sentence.slice(0, idx) + EXAMPLE_BLANK_SENTINEL + sentence.slice(idx + exact[2].length);
-      }
-      const stem = word.replace(/se$/i, '').replace(/[aei]r$/i, '');
-      if (stem.length < 3) return null;
-      const tokens = sentence.split(/([^A-Za-záéíóúüñÁÉÍÓÚÜÑ]+)/);
-      let masked = false;
-      const out = tokens.map((token) => {
-        if (masked || !/^[A-Za-záéíóúüñÁÉÍÓÚÜÑ]+$/.test(token)) return token;
-        if (token.toLowerCase().startsWith(stem.toLowerCase())) {
-          masked = true;
-          return EXAMPLE_BLANK_SENTINEL;
-        }
-        return token;
-      });
-      return masked ? out.join('') : null;
-    }
-
-    function finalizeExampleHtml(text, fallbackBlank) {
-      const source = (text == null && fallbackBlank) ? EXAMPLE_BLANK_SENTINEL : String(text || '');
-      return escapeHtml(source).split(EXAMPLE_BLANK_SENTINEL).join(EXAMPLE_BLANK);
-    }
-
-    function buildExamplePairHtml(primary, secondary, reveal) {
-      const primaryHtml = `"${finalizeExampleHtml(primary, false)}"`;
-      const secondaryHtml = finalizeExampleHtml(secondary, !reveal && secondary == null);
-      return `${primaryHtml} <span class="text-stone-400 dark:text-stone-500 font-normal not-italic ml-1">(${secondaryHtml})</span>`;
-    }
-
-    function renderExampleBox() {
-      const exampleBox = document.getElementById('example-box');
-      if (!exampleBox || !currentWord) return;
-
-      const isEn = (currentLang === 'en');
-      const reveal = isAnswered;
-      const cleanEs = stripExampleMarkers(currentWord.ex_es);
-      const transRaw = isEn ? currentWord.ex_en : currentWord.ex_ko;
-      const cleanTrans = stripExampleMarkers(transRaw);
-      const meaning = isEn ? currentWord.en : currentWord.ko;
-
-      if (currentMode === 'es_to_ko') {
-        const maskedTrans = reveal ? cleanTrans : (maskMeaningInSentence(cleanTrans, meaning, isEn ? 'en' : 'ko') || cleanTrans);
-        exampleBox.innerHTML = buildExamplePairHtml(cleanEs, maskedTrans, reveal);
-      } else {
-        const maskedEs = reveal ? cleanEs : (maskSpanishHeadword(cleanEs, currentWord.es) || null);
-        exampleBox.innerHTML = buildExamplePairHtml(cleanTrans, maskedEs, reveal);
-      }
-    }
-
     function updateQuizCardUI() {
       if (!currentWord) return;
       const cardBadge = document.getElementById('card-badge');
       const questionText = document.getElementById('question-text');
+      const exampleBox = document.getElementById('example-box');
       const optionsContainer = document.getElementById('options-container');
       const feedbackBar = document.getElementById('feedback-bar');
 
@@ -1232,16 +1282,17 @@
       if (feedbackBar) feedbackBar.classList.add('hidden');
 
       const isEn = (currentLang === 'en');
+      const cleanEs = currentWord.ex_es.replace(/\[\[(.*?)\]\]/g, '$1');
+      const transEx = isEn ? currentWord.ex_en : currentWord.ex_ko;
+      const cleanTrans = transEx.replace(/\[\[(.*?)\]\]/g, '$1');
 
       if (currentMode === 'es_to_ko') {
-        // 스페인어 -> 한국어(또는 영어) 맞추기
         questionText.innerText = currentWord.es;
       } else {
-        // 한국어(또는 영어) -> 스페인어 맞추기
         questionText.innerText = isEn ? currentWord.en : currentWord.ko;
       }
-
-      renderExampleBox();
+      // 문제 출제 시 정답 단어 뜻 마스킹 [ ? ? ? ]
+      exampleBox.innerHTML = getMaskedSentence(currentWord, currentMode, currentLang, false);
 
       // 3지선다 버튼 생성
       optionsContainer.innerHTML = '';
@@ -1299,15 +1350,16 @@
         ? (isEn ? currentWord.en : currentWord.ko)
         : currentWord.es;
 
+      // 1. 문제 풀이 시 예문의 마스킹 해제 및 정답 뜻 초록색 강조 노출
+      const exampleBox = document.getElementById('example-box');
+      if (exampleBox && currentWord) {
+        exampleBox.innerHTML = getMaskedSentence(currentWord, currentMode, currentLang, true);
+      }
+
       if (isCorrect) {
         score += 10;
         combo++;
         playSuccessSound();
-
-        const autoTts = document.getElementById('auto-tts-toggle');
-        if (autoTts && autoTts.checked) {
-          speakSpanish(currentWord.es);
-        }
 
         feedbackBar.className = 'mt-5 p-3.5 rounded-xl flex items-center justify-between transition-all bg-emerald-50 border border-emerald-200 text-emerald-800 dark:bg-emerald-950/40 dark:border-emerald-800 dark:text-emerald-200';
         feedbackText.innerHTML = `<i class="fa-solid fa-circle-check text-emerald-500 text-base"></i> <span>${t.feedback_correct}</span>`;
@@ -1322,10 +1374,17 @@
         feedbackText.innerHTML = `<i class="fa-solid fa-circle-xmark text-red-500 text-base"></i> <span>${t.feedback_wrong_prefix}<b>${correctAnsText}</b>${t.feedback_wrong_suffix}</span>`;
       }
 
+      // 2. 문제를 맞추고 나서 단어 원어민 발음 읽어주기 (효과음과 겹치지 않게 220ms 후 재생)
+      const autoTts = document.getElementById('auto-tts-toggle');
+      if (!autoTts || autoTts.checked) {
+        setTimeout(() => {
+          speakSpanish(currentWord.es);
+        }, 220);
+      }
+
       document.getElementById('quiz-score').innerText = score;
       document.getElementById('quiz-combo').innerText = combo;
       feedbackBar.classList.remove('hidden');
-      renderExampleBox();
     }
 
     function nextQuestion() {
