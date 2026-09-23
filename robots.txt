@@ -1,4 +1,4 @@
 User-agent: *
 Allow: /
 
-Sitemap: https://holavoca.pages.dev/sitemap.xml
+Sitemap: https://holavoca.com/sitemap.xml
