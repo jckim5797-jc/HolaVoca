@@ -162,6 +162,14 @@
       <!-- 네비게이션 & 액션 컨트롤 -->
       <div class="flex items-center gap-2 sm:gap-3">
         
+        <!-- 상단 GNB 메뉴 링크 -->
+        <nav class="hidden md:flex items-center gap-1 sm:gap-2 text-xs sm:text-sm font-bold text-stone-600 dark:text-stone-300 mr-2">
+          <a href="#quiz-section" class="px-2.5 py-1 rounded-lg hover:bg-stone-100 dark:hover:bg-stone-800 hover:text-brand-600 transition-colors">단어 퀴즈</a>
+          <a href="/guide/top100.html" class="px-2.5 py-1 rounded-lg hover:bg-stone-100 dark:hover:bg-stone-800 hover:text-brand-600 transition-colors">기초 단어장</a>
+          <a href="#guide-section" class="px-2.5 py-1 rounded-lg hover:bg-stone-100 dark:hover:bg-stone-800 hover:text-brand-600 transition-colors">학습 가이드</a>
+          <a href="/about.html" class="px-2.5 py-1 rounded-lg hover:bg-stone-100 dark:hover:bg-stone-800 hover:text-brand-600 transition-colors">소개</a>
+        </nav>
+
         <!-- 연속 출석 스트릭 배지 -->
         <div class="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-amber-50 border border-amber-200 text-amber-700 dark:bg-amber-950/50 dark:border-amber-900 dark:text-amber-300 text-xs font-bold shadow-sm" data-i18n-title="streak_tooltip" title="연속 학습 스트릭">
           <i class="fa-solid fa-fire text-amber-500 text-sm"></i>
@@ -504,21 +512,37 @@
         
         <!-- 독립 칼럼 및 추천 학습 가이드 바로가기 -->
         <div class="flex flex-wrap items-center justify-center gap-2 mt-4">
+          <a href="/guide/top100.html" class="px-3 py-1.5 rounded-full text-xs font-bold bg-stone-100 hover:bg-stone-200 text-stone-700 dark:bg-stone-800 dark:text-stone-200 border border-stone-200 dark:border-stone-700 transition-colors flex items-center gap-1.5">
+            <i class="fa-solid fa-book-bookmark text-stone-500 text-[10px]"></i>
+            <span>기초 단어 100선</span>
+          </a>
+          <a href="/guide/daily-nouns.html" class="px-3 py-1.5 rounded-full text-xs font-bold bg-amber-50 hover:bg-amber-100 text-amber-700 dark:bg-amber-950 dark:text-amber-300 border border-amber-200 dark:border-amber-800 transition-colors flex items-center gap-1.5">
+            <i class="fa-solid fa-cube text-amber-500 text-[10px]"></i>
+            <span>일상 명사 100선</span>
+          </a>
+          <a href="/guide/adjectives.html" class="px-3 py-1.5 rounded-full text-xs font-bold bg-indigo-50 hover:bg-indigo-100 text-indigo-700 dark:bg-indigo-950 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-800 transition-colors flex items-center gap-1.5">
+            <i class="fa-solid fa-sparkles text-indigo-500 text-[10px]"></i>
+            <span>필수 형용사 100선</span>
+          </a>
+          <a href="/guide/travel-phrases.html" class="px-3 py-1.5 rounded-full text-xs font-bold bg-orange-50 hover:bg-orange-100 text-brand-700 dark:bg-brand-950 dark:text-brand-300 border border-orange-200 dark:border-brand-800 transition-colors flex items-center gap-1.5">
+            <i class="fa-solid fa-plane text-brand-500 text-[10px]"></i>
+            <span>여행 실전 회화 80선</span>
+          </a>
+          <a href="/guide/verbs-irregular.html" class="px-3 py-1.5 rounded-full text-xs font-bold bg-red-50 hover:bg-red-100 text-red-700 dark:bg-red-950 dark:text-red-300 border border-red-200 dark:border-red-800 transition-colors flex items-center gap-1.5">
+            <i class="fa-solid fa-fire text-red-500 text-[10px]"></i>
+            <span>Ser vs Estar & 불규칙 동사</span>
+          </a>
           <a href="/guide/verbs.html" class="px-3 py-1.5 rounded-full text-xs font-bold bg-orange-50 hover:bg-orange-100 text-brand-700 dark:bg-brand-950 dark:text-brand-300 border border-orange-200 dark:border-brand-800 transition-colors flex items-center gap-1.5">
             <i class="fa-solid fa-bolt text-brand-500 text-[10px]"></i>
             <span>필수 동사 20선</span>
           </a>
           <a href="/guide/dele-tips.html" class="px-3 py-1.5 rounded-full text-xs font-bold bg-emerald-50 hover:bg-emerald-100 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800 transition-colors flex items-center gap-1.5">
             <i class="fa-solid fa-graduation-cap text-emerald-500 text-[10px]"></i>
-            <span>DELE 어휘 암기 전략</span>
+            <span>DELE 어휘 전략</span>
           </a>
-          <a href="/guide/gender.html" class="px-3 py-1.5 rounded-full text-xs font-bold bg-indigo-50 hover:bg-indigo-100 text-indigo-700 dark:bg-indigo-950 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-800 transition-colors flex items-center gap-1.5">
-            <i class="fa-solid fa-wand-magic-sparkles text-indigo-500 text-[10px]"></i>
+          <a href="/guide/gender.html" class="px-3 py-1.5 rounded-full text-xs font-bold bg-purple-50 hover:bg-purple-100 text-purple-700 dark:bg-purple-950 dark:text-purple-300 border border-purple-200 dark:border-purple-800 transition-colors flex items-center gap-1.5">
+            <i class="fa-solid fa-wand-magic-sparkles text-purple-500 text-[10px]"></i>
             <span>명사 성별 구분법</span>
-          </a>
-          <a href="/guide/top100.html" class="px-3 py-1.5 rounded-full text-xs font-bold bg-stone-100 hover:bg-stone-200 text-stone-700 dark:bg-stone-800 dark:text-stone-200 border border-stone-200 dark:border-stone-700 transition-colors flex items-center gap-1.5">
-            <i class="fa-solid fa-book-bookmark text-stone-500 text-[10px]"></i>
-            <span>기초 필수 단어 100선</span>
           </a>
         </div>
       </div>
@@ -677,13 +701,13 @@
         <p class="text-xs text-stone-500 dark:text-stone-400 max-w-md break-keep" data-i18n="footer_desc">하루 3분, 5,000개 고빈도 스페인어 어휘를 직관적인 양방향 퀴즈와 원어민 발음으로 마스터하는 무료 교육 플랫폼입니다.</p>
       </div>
 
-      <!-- 애드센스 필수 정책 링크 3종 -->
+      <!-- 애드센스 필수 정책 링크 3종 (검색 로봇용 정규 a 태그 링크 + 모달 유지) -->
       <div class="flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-xs font-semibold text-stone-600 dark:text-stone-300">
-        <button onclick="openPolicyModal('privacy')" class="hover:text-brand-600 dark:hover:text-brand-400 hover:underline transition-colors" data-i18n="footer_policy_privacy">개인정보처리방침 (Privacy Policy)</button>
+        <a href="/privacy.html" class="hover:text-brand-600 dark:hover:text-brand-400 hover:underline transition-colors" data-i18n="footer_policy_privacy">개인정보처리방침 (Privacy Policy)</a>
         <span class="text-stone-300 dark:text-stone-700">•</span>
-        <button onclick="openPolicyModal('terms')" class="hover:text-brand-600 dark:hover:text-brand-400 hover:underline transition-colors" data-i18n="footer_policy_terms">이용약관 (Terms of Service)</button>
+        <a href="/terms.html" class="hover:text-brand-600 dark:hover:text-brand-400 hover:underline transition-colors" data-i18n="footer_policy_terms">이용약관 (Terms of Service)</a>
         <span class="text-stone-300 dark:text-stone-700">•</span>
-        <button onclick="openPolicyModal('about')" class="hover:text-brand-600 dark:hover:text-brand-400 hover:underline transition-colors" data-i18n="footer_policy_about">사이트 소개 및 문의 (About & Contact)</button>
+        <a href="/about.html" class="hover:text-brand-600 dark:hover:text-brand-400 hover:underline transition-colors" data-i18n="footer_policy_about">사이트 소개 및 문의 (About & Contact)</a>
       </div>
 
       <!-- 기술 스택 & 저작권 -->
